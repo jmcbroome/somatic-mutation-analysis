@@ -18,7 +18,7 @@ samtools calmd -ue merged_sorted.bam | python3 qc-utilities/remove_multi_mismatc
 While the calmd bam contains no multiple mismatches at this point, calmd replaces normal sequence strings with N and =. To match the full sequence alignments to the same filters, 
 we extract the set of read names we want to retain then refilter the original file accordingly.
 
-samtools view nomm.bam | awk '{pring $1}' > nomm_reads.txt
+samtools view nomm.bam | awk '{print $1}' > nomm_reads.txt
 
 samtools view -h merged_sorted.bam | python3 qc-utilities/remove_reads.py -r nomm_reads.txt | samtools view -b > merged_sorted.nomm.bam
 
