@@ -25,3 +25,11 @@ samtools view -h merged_sorted.bam | python3 qc-utilities/remove_reads.py -r nom
 We can proceed to pileup at this point.
 
 samtools mpileup -Q 17 -B -ff QCFAIL -f your_reference.fa merged_sorted.nomm.bam > merged_sorted.nomm.pileup
+
+We remove potential PCR duplicates based on the fact that they have overtly similar mapping positions.
+
+python3 qc-utilities/remove_bad_entries.py -i merged_sorted.nomm.pileup -o merged_sorted.nomm.nodup.pileup
+
+We convert the pileup to a vcf format. There's some old code here related to annotating a betabinomial inference of the true body frequency of the data, but this information is not included in the finalized primary analysis. Obtain a vcf header for your genome with samtools or bcftools.
+
+python3 annotation-scripts/pileup_to_annotated_vcf.py -i merged_sorted.nomm.nodup.pileup -a reference_vcf_header.txt -o merged_sorted.nomm.nodup.vcf
