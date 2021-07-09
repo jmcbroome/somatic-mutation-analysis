@@ -33,3 +33,13 @@ python3 qc-utilities/remove_bad_entries.py -i merged_sorted.nomm.pileup -o merge
 We convert the pileup to a vcf format. There's some old code here related to annotating a betabinomial inference of the true body frequency of the data, but this information is not included in the finalized primary analysis. Obtain a vcf header for your genome with samtools or bcftools.
 
 python3 annotation-scripts/pileup_to_annotated_vcf.py -i merged_sorted.nomm.nodup.pileup -a reference_vcf_header.txt -o merged_sorted.nomm.nodup.vcf
+
+The next step is to annotate the vcf with mutation effects, so they can be sorted into coding and noncoding. There are multiple options for this, including applying some custom code included in this repository, but for the purposes of the primary paper analysis I will rely on snpEff. You may need to replace chromosome ID strings to ensure that the snpEff database names match the chromosome names in your reference genome file. 
+
+java -Xmx4g -jar ~/snpEff/snpEff.jar -v your_genome merged_sorted.nomm.nodup.vcf > merged_sorted.nomm.nodup.annotated.vcf
+
+Now we construct a dataframe table for primary analysis, which will include all mutations coding and noncoding.
+
+python3 make_mutation_frame.py -s -o all_mutations.tsv merged_sorted.nomm.nodup.annotated.vcf
+
+This completes the primary data construction step. The all_mutations.tsv is the base material for all further downstream analysis.
