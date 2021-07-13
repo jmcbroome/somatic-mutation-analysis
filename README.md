@@ -9,6 +9,8 @@ gffutils
 
 ## Full Analysis Procedure
 
+### Primary Table Construction
+
 The primary analysis pipeline begins with the output x_sorted.bam files from the [Circleseq Pipeline](https://github.com/jmcbroome/circleseq), which can be easily ran in a batch with run_all.py. Bams are merged into single files representing individuals with samtools merge as needed. The general principle of this procedure is to be as conservative as possible, in order to ensure that all detections are of high-quality and are confidently true somatic mutations for downstream analysis.  
 
 Next, we follow conservative filtering procedures while constructing a pileup. Circleseq consensus bams are flagged as QC pass/fail based on whether any single subsection fails to remap to the target region; reads which fail this are removed. We additionally apply a qc script to conservatively remove reads which contain more than 1 mismatch. 
@@ -38,8 +40,19 @@ The next step is to annotate the vcf with mutation effects, so they can be sorte
 
 java -Xmx4g -jar ~/snpEff/snpEff.jar -no-downstream -no-intergenic -no-intron -no-upstream -no-utr -no INTRAGENIC -v your_genome merged_sorted.nomm.nodup.vcf > merged_sorted.nomm.nodup.annotated.vcf
 
-Now we construct a dataframe table for primary analysis, which will include all mutations coding and noncoding.
+Now we construct a dataframe table for primary analysis, which will include all mutations coding and noncoding. This script expects a specific format of file name for the vcf when parsing multiple files; specifically the second '\_' delimited field is parsed as single letters for strain, stage, and sample number (.e.g something_ra6_something.vcf is parsed as r strain, a stage, number 6 in the output table). 
 
-python3 make_mutation_frame.py -s -o all_mutations.tsv merged_sorted.nomm.nodup.annotated.vcf
+mv merged_sorted.nomm.nodup.annotated.vcf merged_tt1_sorted.nomm.nodup.annotated.vcf
+python3 make_mutation_frame.py -s -o all_mutations.tsv merged_tt1_sorted.nomm.nodup.annotated.vcf
 
 This completes the primary data construction step. The all_mutations.tsv is the base material for all further downstream analysis.
+
+### Mutation Rates and Base Ratio Calculation
+
+The next major step in pursuit of somatic conservation is to establish an estimate for the expected ratio of missense to synonymous mutations across the genome, accounting for both codon usage bias and for the basic rate of different types of mutation. This additionally serves as a branching-off point for the analysis of mutational signatures among somatic mutations. 
+
+To calculate this, first we must calculate genome-wide codon usage. You will need a gtf for your reference genome. 
+
+python3 gtf_to_codons.py -g ref.fa -a ref.gtf -o codons.tsv
+
+This table can also be used to establish by-gene and by-groups-of-genes codon usage counts. 
