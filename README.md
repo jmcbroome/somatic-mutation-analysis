@@ -47,12 +47,30 @@ python3 make_mutation_frame.py -s -o all_mutations.tsv merged_tt1_sorted.nomm.no
 
 This completes the primary data construction step. The all_mutations.tsv is the base material for all further downstream analysis.
 
+NOTE: Many scripts after this point are not written as flexible software with argument parsing but blocks of code with hard-coded variable and file paths to perform specific analytical tasks. To replicate, you may need to edit the script or your filenames as appropriate.
+
 ### Mutation Rates and Base Ratio Calculation
+
+We can immediately apply this table to generate our first figure and calculate the numbers reflected in the first part of our results section.
+
+To do mutation rate calculation, we need to know the overall coverage of each base in each original pileup.
+python3 miscellaneous-scripts/count_bases.py < merged_sorted.nomm.nodup.pileup > basecounts.tsv
+python3 graph-scripts/noncoding_graphs_statistics.py -m redux_allmuts.tsv -b basecount.tsv -o fig1
 
 The next major step in pursuit of somatic conservation is to establish an estimate for the expected ratio of missense to synonymous mutations across the genome, accounting for both codon usage bias and for the basic rate of different types of mutation. This additionally serves as a branching-off point for the analysis of mutational signatures among somatic mutations. 
 
 To calculate this, first we must calculate genome-wide codon usage. You will need a gtf for your reference genome. 
 
-python3 gtf_to_codons.py -g ref.fa -a ref.gtf -o codons.tsv
+python3 annotation_scripts/gtf_to_codons.py -g ref.fa -a ref.gtf -o codons.tsv
 
-This table can also be used to establish by-gene and by-groups-of-genes codon usage counts. 
+This table can also be used to establish by-gene and by-groups-of-genes codon usage counts. It also supports gene-level quality filtering of mutations- removing mutations belonging to genes like Myosin Heavy Chain or other outliers in terms of repetitive structure, mutation, or other issues.
+
+Finally we estimate the base ratio value we should use for conservation analysis going forward. This is done by permuting a distribution of ratio values conditioned on real codon usage across the genome and the real set of mutations. 
+
+python3 annotation-scripts/calculate_base_ratio.py -m all_mutations.tsv -r ref.fa -c codons.tsv 
+
+### Conservation Analysis
+
+python3 annotation-scripts/genefilter_frame.py -m all_mutations.tsv -o coding_mutations.tsv -g bygene_mutations.tsv -c codons.tsv
+
+The coding_mutations table is used for downstream conservation analysis, as it is contains only missense and synonymous mutations for genes which pass quality filtering.
