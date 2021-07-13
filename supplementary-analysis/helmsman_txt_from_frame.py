@@ -22,7 +22,7 @@ def make_txt(row, parts):
     '''
     rid = None
     for frange, label in parts.items():
-        if row.PredFreq >= frange[0] and row.PredFreq <= frange[1]:
+        if row.SampleFreq >= frange[0] and row.SampleFreq <= frange[1]:
             rid = frange[1]
     #if rid == None:
         #print("Issue assigning category")
@@ -37,7 +37,7 @@ def get_text_lines(frame, parts):
 def main():
     args = argparser()
     mutdf = pd.read_csv(args.frame, sep = '\t')
-    mutdf = mutdf[(mutdf.PredFreq > args.min_freq) & (mutdf.PredFreq < args.max_freq)]
+    mutdf = mutdf[(mutdf.SampleFreq > args.min_freq) & (mutdf.SampleFreq < args.max_freq)]
     if not args.coding:
         mutdf = mutdf[mutdf.Type == 'noncoding_variant']
     decim = int(abs(round(np.log10(args.min_freq)))) + 1 #sig digits based on the minimum frequency.
