@@ -9,7 +9,8 @@ def argparser():
     parser.add_argument('-m', '--mutations', help = "Path to a mutation dataframe (output of make_mutation_frame.py)")
     parser.add_argument('-r', '--reference', help = "Path to a reference fasta")
     parser.add_argument('-c', '--codons', help = "Path to a codon dataframe built from your reference and GTF (output of gtf_to_codons.py)")
-    parser.add_argument('-p', '--perms', type = int, help = "Number of permutations to perform for building null expectation of missense/synonymous ratio conditioned on mutation type and number distribution.")
+    parser.add_argument('-g', '--genelist', help = "Text file containing a list of flybase gene identifiers to calculate the ratio on. Default uses all genes in the codons table", default = "")
+    parser.add_argument('-p', '--perms', type = int, help = "Number of permutations to perform for building null expectation of missense/synonymous ratio conditioned on mutation type and number distribution.", default = 100)
     args = parser.parse_args()
     return args
 
@@ -28,6 +29,11 @@ gdf = gdf.set_index("GID")
 mutdf = pd.read_csv(args.mutations, sep = '\t')
 genome = sqio.to_dict(sqio.parse(args.reference, format = 'fasta'))
 
+if args.genelist != "":
+    genes = [g.strip() for g in open(args.genelist).readlines()]
+    gdf = gdf.loc[genes]
+
+
 chroconv = {"X":"NC_004354.4", '2L':'NT_033779.5', '2R':'NT_033778.4', '3L':'NT_037436.4', '3R':'NT_033777.3'}
 #get the prior and latter bases for each mutation for trinucleotide-based analysis
 prior = []
@@ -45,10 +51,14 @@ for i,d in mutdf.iterrows():
 mutdf['MutType'] = mutdf.Ref + '>' + mutdf.Alt
 mutdf['Prior'] = prior
 mutdf['Latter'] = latter
+mutdf['Missense'] = mutdf.Type.apply(lambda x:("missense" in x))
+mutdf['Synonymous'] = mutdf.Type.apply(lambda x:("synonymous" in x))
+
 #the following corrects for GC bias.
-atvc = mutdf[(~mutdf.Synonymous) & (~mutdf.Missense) & (mutdf.Ref.isin(['A','T']))].MutType.value_counts(normalize = True).apply(lambda x:x/2)
-gcvc = mutdf[(~mutdf.Synonymous) & (~mutdf.Missense) & (mutdf.Ref.isin(['C','G']))].MutType.value_counts(normalize = True).apply(lambda x:x/2)
+atvc = mutdf[(~mutdf.Synonymous) & (~mutdf.Missense) & (mutdf.Ref.isin(['A','T']))].MutType.value_counts().apply(lambda x:x/2)
+gcvc = mutdf[(~mutdf.Synonymous) & (~mutdf.Missense) & (mutdf.Ref.isin(['C','G']))].MutType.value_counts().apply(lambda x:x/2)
 occur = pd.concat([atvc, gcvc])
+#print("DEBUG: ", occur)
 mutdf['TrinType'] = mutdf.Prior.apply(lambda x:x.upper()) + mutdf.Ref + mutdf.Latter.apply(lambda x:x.upper()) + '>' + mutdf.Alt
 triatvc = mutdf[(~mutdf.Synonymous) & (~mutdf.Missense) & (mutdf.Ref.isin(['A','T']))].TrinType.value_counts(normalize = True).apply(lambda x:x/2)
 trigcvc = mutdf[(~mutdf.Synonymous) & (~mutdf.Missense) & (mutdf.Ref.isin(['C','G']))].TrinType.value_counts(normalize = True).apply(lambda x:x/2)
