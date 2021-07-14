@@ -43,6 +43,7 @@ java -Xmx4g -jar ~/snpEff/snpEff.jar -no-downstream -no-intergenic -no-intron -n
 Now we construct a dataframe table for primary analysis, which will include all mutations coding and noncoding. This script expects a specific format of file name for the vcf when parsing multiple files; specifically the second '\_' delimited field is parsed as single letters for strain, stage, and sample number (.e.g something_ra6_something.vcf is parsed as r strain, a stage, number 6 in the output table). 
 
 mv merged_sorted.nomm.nodup.annotated.vcf merged_tt1_sorted.nomm.nodup.annotated.vcf
+
 python3 make_mutation_frame.py -s -o all_mutations.tsv merged_tt1_sorted.nomm.nodup.annotated.vcf
 
 This completes the primary data construction step. The all_mutations.tsv is the base material for all further downstream analysis.
@@ -54,7 +55,9 @@ NOTE: Many scripts after this point are not written as flexible software with ar
 We can immediately apply this table to generate our first figure and calculate the numbers reflected in the first part of our results section.
 
 To do mutation rate calculation, we need to know the overall coverage of each base in each original pileup.
+
 python3 miscellaneous-scripts/count_bases.py < merged_sorted.nomm.nodup.pileup > basecounts.tsv
+
 python3 graph-scripts/noncoding_graphs_statistics.py -m redux_allmuts.tsv -b basecount.tsv -o fig1
 
 The next major step in pursuit of somatic conservation is to establish an estimate for the expected ratio of missense to synonymous mutations across the genome, accounting for both codon usage bias and for the basic rate of different types of mutation. This additionally serves as a branching-off point for the analysis of mutational signatures among somatic mutations. 
@@ -78,6 +81,7 @@ One research area supported by this type of data is that of mutational signature
 To accomplish this, we used the somatic signature analysis tools [Helmsman](https://github.com/carjed/helmsman) and the R package [MutationalPatterns](https://bioconductor.org/packages/release/bioc/html/MutationalPatterns.html).
 
 python3 helmsman_txt_from_frame.py -f all_mutations.tsv > all_mutations_helmsman.txt
+
 python3 helmsman.py -M txt -i all_mutations_helmsman.txt -f ref.fa -p helmsman/
 
 Then load mainscript.R in RStudio and run all to inspect the resulting plots.
