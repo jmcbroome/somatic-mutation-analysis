@@ -60,20 +60,6 @@ python3 miscellaneous-scripts/count_bases.py < merged_sorted.nomm.nodup.pileup >
 
 python3 graph-scripts/noncoding_graphs_statistics.py -m redux_allmuts.tsv -b basecount.tsv -o fig1
 
-The next major step in pursuit of somatic conservation is to establish an estimate for the expected ratio of missense to synonymous mutations across the genome, accounting for both codon usage bias and for the basic rate of different types of mutation. This additionally serves as a branching-off point for the analysis of mutational signatures among somatic mutations. 
-
-To calculate this, first we must calculate genome-wide codon usage. You will need a gtf for your reference genome. 
-
-python3 annotation_scripts/gtf_to_codons.py -g ref.fa -a ref.gtf -o codons.tsv
-
-This table can also be used to establish by-gene and by-groups-of-genes codon usage counts. It also supports gene-level quality filtering of mutations- removing mutations belonging to genes like Myosin Heavy Chain or other outliers in terms of repetitive structure, mutation, or other issues.
-
-Finally we estimate the base ratio value we should use for conservation analysis going forward. This is done by permuting a distribution of ratio values conditioned on real codon usage across the genome and the real set of mutations. This is calculated via permutation of the location of mutations while holding their types constant and checking the set of coding mutations which result.
-
-python3 annotation-scripts/calculate_base_ratio.py -m all_mutations.tsv -r ref.fa -c codons.tsv 
-
-For Drosophila melanogaster under the somatic distribution of mutations, this should be very close to 2.75 with a 95% confidence interval of (2.72,2.77).
-
 #### Supplementary: Somatic Signatures
 
 One research area supported by this type of data is that of mutational signatures, or how specific types of mutations appear in specific trinucleotide contexts. Part of the supplement includes basic mutational signature analysis, with the primary goal of further elucidating the distribution of mutation types over different frequencies of somatic mutation (and therefore over the course of early development). 
@@ -92,3 +78,16 @@ python3 annotation-scripts/genefilter_frame.py -m all_mutations.tsv -o coding_mu
 
 The coding_mutations table is used for downstream conservation analysis, as it is contains only missense and synonymous mutations for genes which pass quality filtering.
 
+The next major step in pursuit of somatic conservation is to establish an estimate for the expected ratio of missense to synonymous mutations across the genome, accounting for both codon usage bias and for the basic rate of different types of mutation. This additionally serves as a branching-off point for the analysis of mutational signatures among somatic mutations. 
+
+To calculate this, first we must calculate genome-wide codon usage. You will need a gtf for your reference genome. 
+
+python3 annotation_scripts/gtf_to_codons.py -g ref.fa -a ref.gtf -o codons.tsv
+
+This table can also be used to establish by-gene and by-groups-of-genes codon usage counts. It also supports gene-level quality filtering of mutations- removing mutations belonging to genes like Myosin Heavy Chain or other outliers in terms of repetitive structure, mutation, or other issues.
+
+Next we estimate the base ratio value we should use for conservation analysis going forward. This is done by permuting a distribution of ratio values conditioned on real codon usage across the genome and the real set of mutations. This is calculated via permutation of the location of mutations while holding their types constant and checking the set of coding mutations which result.
+
+python3 annotation-scripts/calculate_base_ratio.py -m all_mutations.tsv -r ref.fa -c codons.tsv 
+
+For Drosophila melanogaster under the somatic distribution of mutations, this should be very close to 2.75 with a 95% confidence interval of (2.72,2.77).
