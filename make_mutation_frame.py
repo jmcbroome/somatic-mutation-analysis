@@ -14,12 +14,12 @@ def argparser():
     parser.add_argument('files', nargs = '+', help = 'paths to any number of annotated vcf files to include in the frame.')
     parser.add_argument('-o', '--output', help = 'Name to save the dataframe object to. Default is mutations.tsv', default = 'mutations.tsv')
     parser.add_argument('-i', '--genbank_id', action = 'store_true', help = "Use to use genbank IDs for chromosomes, else uses the original chromosome name.", default = False)
-    parser.add_argument('-m', '--maxdepth', type = int, help = 'Maximum depth to include in the frame. Default 2000', default = 2000)
-    parser.add_argument('-n', '--mindepth', type = int, help = 'Minimum depth to include in the frame. Default 20', default = 20)
-    parser.add_argument('-t', '--genecount', type = int, help = 'Maximum number of mutations allowed in a single gene. Default 500', default = 500)
-    parser.add_argument('-c', '--cluster', type = int, help = 'Minimum distance in basepairs required between neighboring somatic mutations. Does not affect germline mutations. Default 50', default = 50)
+    parser.add_argument('-m', '--maxdepth', type = int, help = 'Maximum depth to include in the frame. Default 10000', default = 10000)
+    parser.add_argument('-n', '--mindepth', type = int, help = 'Minimum depth to include in the frame. Default 10', default = 10)
+    #parser.add_argument('-t', '--genecount', type = int, help = 'Maximum number of mutations allowed in a single gene. Default 10000', default = 10000)
+    parser.add_argument('-c', '--cluster', type = int, help = 'Minimum distance in basepairs required between neighboring somatic mutations. Does not affect germline mutations. Default 0', default = 0)
     parser.add_argument('-g', '--badgenes', help = 'Path to a file containing undesired gene IDs to exclude. Default is None', default = None)
-    parser.add_argument('-a', '--shared', help = 'Filter somatic mutations which are shared at least this many times as possible leaky germline. Default 1', default = 1)
+    parser.add_argument('-a', '--shared', help = 'Filter somatic mutations which are shared at least this many times as leaky germline. Default 1', default = 1)
     parser.add_argument('-f', '--frequency', type = int, help = 'Set to an integer value for the minimum number of consensus circles supporting an alterantive allele. Default 1', default = 1)
     parser.add_argument('-k', '--mark_only', action = 'store_true', help = 'Use to add columns indicating whether each filter would remove a given mutation.')
     args = parser.parse_args()
@@ -229,13 +229,15 @@ def filter_frame(mutdf, args):
         #print("QC: I am filtering.", args.mark_only)
         mutdf = mutdf[keepvec]
     #filter out genes with many mutations
-    if args.snpeff:
-        somg = mutdf[mutdf.Somatic].GID.value_counts()
-        targets = [i for i in somg.index if somg[i] > args.genecount and i != "None"] #intergenic does not count!
-        if args.mark_only:
-            mutdf['MutGeneF:' + str(args.genecount)] =  (~mutdf.GID.isin(targets)) #false = removed.
-        else:
-            mutdf = mutdf[~mutdf.GID.isin(targets)]
+    #disabling this filter step as its better to filter on gene downstream after preparsing genes we want to use
+    #and this is sensitive to how/what kinds of mutations snpeff is allowed to record.
+    # if args.snpeff:
+        # somg = mutdf[mutdf.Somatic].GID.value_counts()
+        # targets = [i for i in somg.index if somg[i] > args.genecount and i != "None"] #intergenic does not count!
+        # if args.mark_only:
+        #     mutdf['MutGeneF:' + str(args.genecount)] =  (~mutdf.GID.isin(targets)) #false = removed.
+        # else:
+        #     mutdf = mutdf[~mutdf.GID.isin(targets)]
     #filter out sites that are excessively high depth
     if args.mark_only:
         mutdf['HDepF:' + str(args.maxdepth)] = (mutdf.Depth <= args.maxdepth)
@@ -273,7 +275,7 @@ def filter_frame(mutdf, args):
 def main():
     args = argparser()
     mutdf = create_frame(args)
-    #print("QC: Initial Frame Size", mutdf.shape)
+    print("QC: Initial Frame Size", mutdf.shape)
     fmutdf = filter_frame(mutdf, args)
     fmutdf.to_csv(args.output, sep = '\t')
 
