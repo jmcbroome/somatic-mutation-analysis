@@ -6,6 +6,7 @@ SNPEff
 samtools
 Biopython
 gffutils
+genmap
 
 ## Full Analysis Procedure
 
@@ -71,6 +72,9 @@ python3 helmsman_txt_from_frame.py -f all_mutations.tsv > all_mutations_helmsman
 python3 helmsman.py -M txt -i all_mutations_helmsman.txt -f ref.fa -p helmsman/
 
 Then load mainscript.R in RStudio and run all to inspect the resulting plots.
+
+### Genmap Filtering
+As an additional but optional conservative filtering step, I ran genmap with the parameters -k 100 -e 2 across my reference, then intersected the resulting bedgraph output with the reference gff. This allowed me to extract a set of mappability values for every gene. Mappability is 0 for repetitive and 1 for unique; in this case, I removed every gene which had a mappability score of less than 1 anywhere in it.
 
 ### Conservation Analysis
 
