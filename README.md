@@ -110,3 +110,9 @@ Then run it with
 ./precompute_spectra
 
 Note that the restricted_depth_values.tsv dataframe must exist (part of default output from genefilter_frame.py).
+
+Finally, just run 
+
+python3 abc_rejector_wrapper.py
+
+This requires a specific set of filenames to exist to work. 
