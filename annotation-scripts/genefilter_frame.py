@@ -11,6 +11,7 @@ def argparser():
     parser.add_argument('-t', '--rate', type = float, help = "Maximum number of coding mutations per base allowed for a gene to be included. Default is .2", default = .2)
     parser.add_argument('-p', '--countcap', type = int, help = "Maximum number of coding mutations allowed for a single gene period. Default is 1000", default = 1000)
     parser.add_argument('-i', '--ratio', type = float, help = "Maximum raw ratio of missense to synonymous mutations allowed for an individual gene before removal. Default 20x more missense than synonymous", default = 20)
+    parser.add_argument('-d', '--depths', help = "Path to an output table containing depth and normalized count values for spectra generation.", default = "restricted_depth_values.tsv")
     args = parser.parse_args()
     return args
 args = argparser()
@@ -24,6 +25,11 @@ translate = {'TTT':'F','TTC':'F','TTA':'L','TTG':'L','TCT':'S','TCC':'S','TCA':'
                 'GTT':'V','GTC':'V','GTA':'V','GTG':'V','GCT':'A','GCC':'A','GCA':'A','GCG':'A',
                 'GAT':'D','GAC':'D','GAA':'E','GAG':'E','GGT':'G','GGC':'G','GGA':'G','GGG':'G'}
 mutdf = pd.read_csv(args.mutations, sep = '\t')
+print("Saving depth table.")
+dvc = mutdf.Depth.value_counts(normalize=True)
+with open(args.depths, "w+") as outf:
+    for i in dvc.index:
+        print(str(i) + "\t" + str(dvc[i]), file = outf)
 cdf = pd.read_csv(args.codons, sep = '\t')
 cdf = cdf.set_index('GID')
 print("Constructing by-gene mutation table.")
@@ -81,7 +87,7 @@ def generate_smutdf(mutdf):
     #because the way snpeff records annotation is nightmarish, 
     #I have to use a bunch of code to parse out whether any given mutation is synonymous, missense, or whatever
     #going to make a fresh frame that has a unique entry for each gene involved with the mutation
-    smutdf = {k:[] for k in ['Chro','Loc','Effect','GID','Pi', 'Overlap', "SSN"]}
+    smutdf = {k:[] for k in ['Chro','Loc','Effect','GID','Pi', 'Overlap', "SSN", "SampleFreq", "Depth"]}
     for i,d in mutdf[mutdf.SampleFreq < .25].iterrows():
         #split the d.GID column into values
         try:
@@ -105,6 +111,8 @@ def generate_smutdf(mutdf):
                     smutdf['Pi'].append(d.Pi)
                     smutdf['Overlap'].append(len(gvs))
                     smutdf["SSN"].append(d.SSN)
+                    smutdf["SampleFreq"].append(d.SampleFreq)
+                    smutdf["Depth"].append(d.Depth)
                 if ef == 'synonymous_variant':
                     smutdf['Chro'].append(d.Chro)
                     smutdf['Loc'].append(d.Loc)
@@ -113,6 +121,8 @@ def generate_smutdf(mutdf):
                     smutdf['Pi'].append(d.Pi)
                     smutdf['Overlap'].append(len(gvs))
                     smutdf["SSN"].append(d.SSN)
+                    smutdf["SampleFreq"].append(d.SampleFreq)
+                    smutdf["Depth"].append(d.Depth)
                 else:
                     smutdf['Chro'].append(d.Chro)
                     smutdf['Loc'].append(d.Loc)
@@ -121,9 +131,11 @@ def generate_smutdf(mutdf):
                     smutdf['Pi'].append(d.Pi)
                     smutdf['Overlap'].append(len(gvs))
                     smutdf["SSN"].append(d.SSN)
+                    smutdf["SampleFreq"].append(d.SampleFreq)
+                    smutdf["Depth"].append(d.Depth)
     smutdf = pd.DataFrame(smutdf)
     #also strip duplicate entries.
-    smutdf = smutdf.drop_duplicates(subset = ['Loc', 'GID', 'SSN', 'Pi'])
+    smutdf = smutdf.drop_duplicates(subset = ['Loc', 'GID', 'SSN', 'Pi', 'Effect'])
     return smutdf
 
 smutdf = generate_smutdf(mutdf)
