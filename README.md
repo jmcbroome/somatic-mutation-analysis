@@ -102,8 +102,11 @@ For Drosophila melanogaster under the somatic distribution of mutations, this sh
 We apply approximate bayesian computation (ABC) methods to estimate a reasonable range of parameters for selection that could explain our output. This begins with precomputing a set of spectra for various levels of selection under a simplified demographic model of development; this speeds later simulations by allowing simulation of final mutation frequency to be as simple as selecting from a list of values instead of having to perform a full simulation each time in python.
 
 The first step is to compile the small C++ script for generating these spectra with 
+
 g++ -o precompute_spectra precompute_spectra.cpp
+
 Then run it with 
+
 ./precompute_spectra
 
 Note that the restricted_depth_values.tsv dataframe must exist (part of default output from genefilter_frame.py).
