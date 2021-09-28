@@ -122,14 +122,17 @@ int main() {
     std::vector<int> generations = {2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24};
     std::vector<float> selv;
     selv.emplace_back(0.0);
-    for (float s = 1; s < 100; s++) {
-        float sp = (s / 100);
-        selv.emplace_back(sp);
+    for (int pi = 1; pi <= 5; pi++) {
+        for (float s = 1; s < 10; s++) {
+            float sp = (s * pow(10,-pi));
+            selv.emplace_back(sp);
+        }
     }
+
     std::vector<std::pair<int,float>> depm = parse_depths("restricted_depth_values.tsv");
 
     std::ofstream out;
-    out.open("selinvert_pis.tsv");
+    out.open("smallsel_pis.tsv");
     out << "generation\tselection\tdepth\tcircle\n";
     std::cerr << "Beginning simulations.\n";
     size_t completed = 0;

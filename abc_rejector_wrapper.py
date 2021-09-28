@@ -79,13 +79,20 @@ def simulator_function_v5(prop_neutral, alpha, mutation_decline = 0.01, size = s
                 s = 0
             else:
                 gs = gamma_model.rvs()
-                gs = round(gs,2)
-                if gs >= 1:
-                    s = .99
-                elif gs < 0.0:
-                    s = 0
+                if gs > 1:
+                    s = 0.99
+                elif gs > .1:
+                    s = round(gs,1)
+                elif gs >= .01:
+                    s = round(gs,2)
+                elif gs >= .001:
+                    s = round(gs,3)
+                elif gs >= .0001:
+                    s = round(gs,4)
+                elif gs >= .00001:
+                    s = round(gs,5)
                 else:
-                    s = gs
+                    s = 0.0
         #round rvs to the nearest two decimal places.
         #pick a g based on the relative likelihood of time of mutation.
         #in this case, we're assuming a flat likelihood of mutation across the model, unlike SLiM.
@@ -189,7 +196,7 @@ def rejection_simulator_pinpis(unimin = 0, unimax = 1, thresh = 1000, target = 1
         pass
     return acc_pneu, acc_galpha, acc_mdec
 
-apn, aga, amd = rejection_simulator_pinpis(unimin = 0.5, thresh = 50, target = 500)
+apn, aga, amd = rejection_simulator_pinpis(unimin = 0.5, thresh = 100, target = 1000)
 outdf = pd.DataFrame({"PropNeu":apn, "GAlpha":aga, "MDec":amd})
 outdf.to_csv("redux_rejection_pests_nmv3.tsv",sep='\t')
 print("Completed; found {} acceptable parameter combinations.".format(len(apn)))
