@@ -12,6 +12,8 @@ def reverse_complement(seq):
 def identify_variants_duplex(read):
     variants = [] 
     seq = read.get_forward_sequence()
+    #for some reason, the duplex consensus output bam isn't correctly tagged, so the get_forward_sequence() yields the reverse sequence and it comes out as nonsense.
+    #so we have to manually reverse the damn thing.
     if read.is_reverse:
         seq = reverse_complement(seq)
     pairs = read.get_aligned_pairs(matches_only=True,with_seq=True)
@@ -27,13 +29,20 @@ def identify_variants_duplex(read):
     return variants
 
 bamf = pysam.AlignmentFile(sys.argv[1],"rb")
-print(bamf.header)
+print(bamf.header,end="")
 for r in bamf.fetch():
-    variants = identify_variants_duplex(r)
     toss = False
+    try:
+        variants = identify_variants_duplex(r)
+    except:
+        toss = True
+        variants = []
     for v in variants:
         readpos = v[0]
         if readpos < 4 or readpos > r.query_length - 4:
             toss = True
     if not toss:
-        print(r)
+        # try:
+        print(r.to_string())
+        # except:
+            # continue
