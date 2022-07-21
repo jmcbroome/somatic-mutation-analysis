@@ -42,7 +42,4 @@ for r in bamf.fetch():
         if readpos < 4 or readpos > r.query_length - 4:
             toss = True
     if not toss:
-        # try:
         print(r.to_string())
-        # except:
-            # continue
